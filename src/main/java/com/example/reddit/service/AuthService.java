@@ -4,14 +4,23 @@ import com.example.reddit.Entity.User;
 import com.example.reddit.Entity.VerificationToken;
 import com.example.reddit.Reposotory.UserRepository;
 import com.example.reddit.Reposotory.VerificationTokenRepository;
+import com.example.reddit.dto.AuthenticationRespone;
+import com.example.reddit.dto.LoginRequest;
 import com.example.reddit.dto.NotificationEmail;
 import com.example.reddit.dto.RegisterRequest;
+import com.example.reddit.exception.springRadditException;
+import com.example.reddit.security.JwtProvider;
 import lombok.AllArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -22,11 +31,14 @@ public class AuthService {
     private final UserRepository userRepository;
     private final VerificationTokenRepository verificationTokenRepository;
     private final MailService mailService;
+    private final AuthenticationManager authenticationManager;
+    private final JwtProvider JwtProvider;
+
     @Transactional
     public void signup(RegisterRequest registerRequest){
         User user=new User();
         user.setEmail(registerRequest.getEmail());
-        user.setUserName(registerRequest.getUserName());
+        user.setUserName( registerRequest.getUserName());
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
         user.setCreated(Instant.now());
         user.setEnabled(false);
@@ -120,5 +132,31 @@ public class AuthService {
                 "  </tbody></table><div class=\"yj6qo\"></div><div class=\"adL\">\n" +
                 "\n" +
                 "</div></div>";
+    }
+
+    public void verifyAccount(String token) {
+      Optional<VerificationToken> verificationToken=  this.verificationTokenRepository.findByToken(token);
+      verificationToken.orElseThrow(() -> new springRadditException("invalid token"));
+      enableUser(verificationToken.get().getUser());
+    }
+
+    @Transactional
+    public void enableUser(User user) {
+        user.setEnabled(true);
+        this.userRepository.save(user);
+    }
+
+    public AuthenticationRespone login(LoginRequest loginRequest) {
+        System.out.println("authenticationToken1");
+        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken=
+                new UsernamePasswordAuthenticationToken(loginRequest.getUserName(),loginRequest.getPassword());
+
+        Authentication authentication= this.authenticationManager.authenticate(usernamePasswordAuthenticationToken);
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+       String authenticationToken= JwtProvider.generateToken(authentication);
+
+        return new AuthenticationRespone(authenticationToken,loginRequest.getUserName());
     }
 }
