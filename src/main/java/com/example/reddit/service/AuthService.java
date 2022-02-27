@@ -15,6 +15,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,36 +37,37 @@ public class AuthService {
     private final JwtProvider JwtProvider;
 
     @Transactional
-    public void signup(RegisterRequest registerRequest){
-        User user=new User();
+    public void signup(RegisterRequest registerRequest) {
+        User user = new User();
         user.setEmail(registerRequest.getEmail());
-        user.setUserName( registerRequest.getUserName());
+        user.setUserName(registerRequest.getUserName());
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
         user.setCreated(Instant.now());
         user.setEnabled(false);
 
         userRepository.save(user);
 
-        String token =generateVerificationToken(user);
+        String token = generateVerificationToken(user);
 
-        NotificationEmail notificationEmail=new NotificationEmail();
+        NotificationEmail notificationEmail = new NotificationEmail();
         notificationEmail.setRecipient(user.getEmail());
         notificationEmail.setSubject("please activate email!");
-       // notificationEmail.setBody("Thank you for signing to Reddit please click to the url to activate the account " +
-         //       "http://localhost:8080/api/auth/accountVerification/"+token);
-        notificationEmail.setBody(buildEmail("malak","http://localhost:8080/api/auth/accountVerification/"+token));
+        // notificationEmail.setBody("Thank you for signing to Reddit please click to the url to activate the account " +
+        //       "http://localhost:8080/api/auth/accountVerification/"+token);
+        notificationEmail.setBody(buildEmail("malak", "http://localhost:8080/api/auth/accountVerification/" + token));
         mailService.sendMail(notificationEmail);
     }
 
     private String generateVerificationToken(User user) {
-        String token= UUID.randomUUID().toString();
-        VerificationToken verificationToken=new VerificationToken();
+        String token = UUID.randomUUID().toString();
+        VerificationToken verificationToken = new VerificationToken();
         verificationToken.setToken(token);
         verificationToken.setUser(user);
 
         verificationTokenRepository.save(verificationToken);
         return token;
     }
+
     private String buildEmail(String name, String link) {
         return "<div style=\"font-family:Helvetica,Arial,sans-serif;font-size:16px;margin:0;color:#0b0c0c\">\n" +
                 "\n" +
@@ -135,9 +138,9 @@ public class AuthService {
     }
 
     public void verifyAccount(String token) {
-      Optional<VerificationToken> verificationToken=  this.verificationTokenRepository.findByToken(token);
-      verificationToken.orElseThrow(() -> new springRadditException("invalid token"));
-      enableUser(verificationToken.get().getUser());
+        Optional<VerificationToken> verificationToken = this.verificationTokenRepository.findByToken(token);
+        verificationToken.orElseThrow(() -> new springRadditException("invalid token"));
+        enableUser(verificationToken.get().getUser());
     }
 
     @Transactional
@@ -146,17 +149,30 @@ public class AuthService {
         this.userRepository.save(user);
     }
 
+    @Transactional
+    public User getCurrentUser() {
+        Object priciple = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String userName;
+        if (priciple instanceof UserDetails) {
+            userName = ((UserDetails) priciple).getUsername();
+        } else {
+            userName = priciple.toString();
+        }
+        return userRepository.findByUserName(userName).
+                orElseThrow(() -> new UsernameNotFoundException("User name not found - " + userName));
+    }
+
     public AuthenticationRespone login(LoginRequest loginRequest) {
 
-        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken=
-                new UsernamePasswordAuthenticationToken(loginRequest.getUserName(),loginRequest.getPassword());
+        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
+                new UsernamePasswordAuthenticationToken(loginRequest.getUserName(), loginRequest.getPassword());
 
-        Authentication authentication= this.authenticationManager.authenticate(usernamePasswordAuthenticationToken);
+        Authentication authentication = this.authenticationManager.authenticate(usernamePasswordAuthenticationToken);
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-       String authenticationToken= JwtProvider.generateToken(authentication);
+        String authenticationToken = JwtProvider.generateToken(authentication);
 
-        return new AuthenticationRespone(authenticationToken,loginRequest.getUserName());
+        return new AuthenticationRespone(authenticationToken, loginRequest.getUserName());
     }
 }
