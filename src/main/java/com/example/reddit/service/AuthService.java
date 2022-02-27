@@ -147,7 +147,7 @@ public class AuthService {
     }
 
     public AuthenticationRespone login(LoginRequest loginRequest) {
-        System.out.println("authenticationToken1");
+
         UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken=
                 new UsernamePasswordAuthenticationToken(loginRequest.getUserName(),loginRequest.getPassword());
 

@@ -1,6 +1,7 @@
 package com.example.reddit.security;
 
 import com.example.reddit.exception.springRadditException;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.User;
@@ -48,8 +49,26 @@ public class JwtProvider {
         try {
             return (PrivateKey) keyStore.getKey("springblog", "secret".toCharArray());
         } catch (KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException e) {
+            throw new springRadditException("Exception occured while retrieving private key from keystore");
+        }
+    }
+
+    public boolean validateToken(String jwtToken) {
+        Jwts.parser().setSigningKey(getPublicKey()).parseClaimsJws(jwtToken);
+        return true;
+    }
+
+    private PublicKey getPublicKey() {
+        try {
+           return keyStore.getCertificate("springblog").getPublicKey();
+        } catch (KeyStoreException e) {
             throw new springRadditException("Exception occured while retrieving public key from keystore");
         }
+    }
+
+    public String getUsernameFromJwt(String jwtToken) {
+     return Jwts.parser().setSigningKey(getPublicKey())
+             .parseClaimsJws(jwtToken).getBody().getSubject();
     }
 }
 
