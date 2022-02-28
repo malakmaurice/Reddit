@@ -1,5 +1,6 @@
 package com.example.reddit.controller;
 
+import com.example.reddit.dto.ExceptionResponse;
 import com.example.reddit.dto.SubredditDto;
 import com.example.reddit.service.SubredditService;
 import lombok.AllArgsConstructor;
@@ -16,9 +17,16 @@ public class SubredditController {
     private final SubredditService subredditService;
 
     @PostMapping
-    public ResponseEntity<SubredditDto> saveSubreddit(@RequestBody SubredditDto subredditDto){
-              return  ResponseEntity.status(HttpStatus.ACCEPTED)
-                      .body(subredditService.save(subredditDto));
+    public ResponseEntity<Object> saveSubreddit(@RequestBody SubredditDto subredditDto){
+              try{
+                  return  ResponseEntity.status(HttpStatus.ACCEPTED)
+                          .body(subredditService.save(subredditDto));
+              }catch (Exception e){
+                  ExceptionResponse exceptionResponse=
+                          new ExceptionResponse(e.toString(), e.getMessage());
+                  return  ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                          .body(exceptionResponse);
+              }
     }
 
     @GetMapping
@@ -29,7 +37,7 @@ public class SubredditController {
     @GetMapping("/{subreditId}")
     public ResponseEntity<Object> getSubreddit(@PathVariable Long subreditId){
        try {
-           SubredditDto subredditDto =subredditService.getSubreddit(subreditId);
+           SubredditDto subredditDto =subredditService.getSubredditDtoById(subreditId);
            return ResponseEntity.status(HttpStatus.OK)
                    .body(subredditDto);
        }catch (Exception e ){

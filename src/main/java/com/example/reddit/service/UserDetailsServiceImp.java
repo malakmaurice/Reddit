@@ -67,4 +67,8 @@ public class UserDetailsServiceImp implements UserDetailsService {
         };
 
     }
+    public User getUserById(Long id){
+        return this.userRepository.findById(id)
+                .orElseThrow(() -> new springRadditException("User ID "+ id +" Not Found"));
+    }
 }

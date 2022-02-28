@@ -18,19 +18,10 @@ public class SubredditService {
     private final AuthService authService;
 
     public SubredditDto save(SubredditDto subredditDto) {
-        Subreddit subreddit=mapToSubreddit(subredditDto);
-        subreddit= subredditRepository.save(subreddit);
+        Subreddit subreddit = mapToSubreddit(subredditDto);
+        subreddit = subredditRepository.save(subreddit);
         subredditDto.setId(subreddit.getSubredditId());
         return subredditDto;
-    }
-
-    public Subreddit mapToSubreddit (SubredditDto subredditDto){
-        return Subreddit.builder()
-                .name("/r/"+subredditDto.getName())
-                .descrption(subredditDto.getDescrption())
-                .user(authService.getCurrentUser())
-                .createdDate(Instant.now())
-                .build();
     }
 
     public List<SubredditDto> getAllSubreddits() {
@@ -39,15 +30,35 @@ public class SubredditService {
                 .collect(Collectors.toList());
     }
 
+    public SubredditDto getSubredditDtoById(Long id) {
+        Subreddit subreddit = subredditRepository.findById(id)
+                .orElseThrow(() -> new springRadditException("subreddit id not found"));
+        return mapToSubredditDto(subreddit);
+    }
+
+    public Subreddit getSubredditById(Long id) {
+        return subredditRepository.findById(id)
+                .orElseThrow(() -> new springRadditException("subreddit id not found"));
+
+    }
+    public Subreddit getSubredditByName(String subredditName) {
+        return this.subredditRepository.findByName(subredditName)
+                .orElseThrow(() -> new springRadditException("subreddit name " + " Not found"));
+    }
+
     private SubredditDto mapToSubredditDto(Subreddit subreddit) {
-       return SubredditDto.builder().id(subreddit.getSubredditId())
+        return SubredditDto.builder().id(subreddit.getSubredditId())
                 .name(subreddit.getName()).
                 descrption(subreddit.getDescrption())
                 .postCount(subreddit.getPosts().size()).build();
     }
-    public SubredditDto getSubreddit(Long id){
-      Subreddit subreddit=  subredditRepository.findById(id)
-              .orElseThrow(() -> new springRadditException("subreddit id not found"));
-      return mapToSubredditDto(subreddit);
+
+    public Subreddit mapToSubreddit(SubredditDto subredditDto) {
+        return Subreddit.builder()
+                .name(subredditDto.getName())
+                .descrption(subredditDto.getDescrption())
+                .user(authService.getCurrentUser())
+                .createdDate(Instant.now())
+                .build();
     }
 }
