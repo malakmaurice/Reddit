@@ -52,9 +52,9 @@ public class AuthService {
         NotificationEmail notificationEmail = new NotificationEmail();
         notificationEmail.setRecipient(user.getEmail());
         notificationEmail.setSubject("please activate email!");
-        // notificationEmail.setBody("Thank you for signing to Reddit please click to the url to activate the account " +
-        //       "http://localhost:8080/api/auth/accountVerification/"+token);
-        notificationEmail.setBody(buildEmail("malak", "http://localhost:8080/api/auth/accountVerification/" + token));
+        notificationEmail.setBody("Thank you for signing to Reddit please click to the url to activate the account " +
+              "http://localhost:8080/api/auth/accountVerification/"+token);
+        //notificationEmail.setBody(buildEmail("malak", "http://localhost:8080/api/auth/accountVerification/" + token));
         mailService.sendMail(notificationEmail);
     }
 

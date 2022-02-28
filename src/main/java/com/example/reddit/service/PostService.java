@@ -57,12 +57,16 @@ public class PostService {
                 .collect(Collectors.toList());
     }
 
-    public PostResponseDto getPostById(Long id) {
+    public PostResponseDto getPostResponseDtoById(Long id) {
         Post post= this.postRepository.findById(id)
                 .orElseThrow(()->new springRadditException("post Not Found "+id.toString()));
         return mapToPostResponseDto(post);
     }
 
+    public Post getPostById(Long id) {
+        return this.postRepository.findById(id)
+                .orElseThrow(()->new springRadditException("post Not Found "+id.toString()));
+    }
 
     public List<Object> getPostsBySubreddit(Long id) {
         Subreddit subreddit= this.subredditService.getSubredditById(id);

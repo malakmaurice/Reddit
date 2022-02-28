@@ -19,7 +19,7 @@ import javax.mail.internet.MimeMessage;
 public class MailService {
 
     private final JavaMailSender mailSender;
-
+    private final MailContentBuilder mailContentBuilder;
 
     @Async
     void sendMail(NotificationEmail notificationEmail) {
@@ -28,7 +28,7 @@ public class MailService {
             messageHelper.setFrom("malakmaurice123@gmail.com");
             messageHelper.setTo(notificationEmail.getRecipient());
             messageHelper.setSubject(notificationEmail.getSubject());
-            messageHelper.setText(notificationEmail.getBody(),true);
+            messageHelper.setText(mailContentBuilder.build(notificationEmail.getBody()),true);
         };
 
     try {

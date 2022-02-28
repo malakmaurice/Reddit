@@ -71,4 +71,8 @@ public class UserDetailsServiceImp implements UserDetailsService {
         return this.userRepository.findById(id)
                 .orElseThrow(() -> new springRadditException("User ID "+ id +" Not Found"));
     }
+    public User getUserByUserName(String userName){
+        return this.userRepository.findByUserName(userName)
+                .orElseThrow(() -> new springRadditException("User Name "+ userName +" Not Found"));
+    }
 }
