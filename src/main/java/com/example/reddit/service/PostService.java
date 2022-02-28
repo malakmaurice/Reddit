@@ -3,6 +3,7 @@ package com.example.reddit.service;
 import com.example.reddit.Entity.Post;
 import com.example.reddit.Entity.Subreddit;
 import com.example.reddit.Entity.User;
+import com.example.reddit.Reposotory.CommentRepository;
 import com.example.reddit.Reposotory.PostRepository;
 import com.example.reddit.dto.PostRequestDto;
 import com.example.reddit.dto.PostResponseDto;
@@ -23,6 +24,7 @@ public class PostService {
     private final AuthService authService;
     private final SubredditService subredditService;
     private final UserDetailsServiceImp userDetailsService;
+    private final CommentRepository commentRepository;
 
     public PostResponseDto savePost(PostRequestDto postRequestDto) {
       Post post = this.postRepository.save(mapToPost(postRequestDto));
@@ -38,6 +40,8 @@ public class PostService {
                 .url(post.getUrl())
                 .postName(post.getPostName())
                 .description(post.getDescription())
+                .voteCount(post.getVoteCount())
+                .commentCount(commentRepository.findAllByPost(post).get().size())
                 .build();
     }
     public Post mapToPost(PostRequestDto postRequestDto){
@@ -48,6 +52,7 @@ public class PostService {
                 .createdDate(Instant.now())
                 .subreddit(this.subredditService.getSubredditByName(postRequestDto.getSubredditName()))
                 .user(this.authService.getCurrentUser())
+                .voteCount(0)
                 .build();
     }
 

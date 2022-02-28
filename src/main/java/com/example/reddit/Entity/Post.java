@@ -32,5 +32,5 @@ public class Post {
     @JoinColumn(name = "subredditId",referencedColumnName = "subredditId")
     private Subreddit subreddit;
     private Instant createdDate;
-    private Integer voteCount=0;
+    private Integer voteCount = 0;
 }

@@ -1,8 +1,14 @@
 package com.example.reddit.Entity;
 
 public enum VoteType {
-    UPVOTE(1),DOWNVOTE(-1);
+    DOWNVOTE(1),UPVOTE(-1);
 
-    VoteType(int i) {
+    private int direction;
+
+    public int getDirection() {
+        return direction;
+    }
+    private VoteType(int direction) {
+        this.direction=direction;
     }
 }
