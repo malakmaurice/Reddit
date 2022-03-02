@@ -1,13 +1,12 @@
 package com.example.reddit.service;
 
+import com.example.reddit.Entity.RefreshToken;
 import com.example.reddit.Entity.User;
 import com.example.reddit.Entity.VerificationToken;
+import com.example.reddit.Reposotory.RefreshTokenRepository;
 import com.example.reddit.Reposotory.UserRepository;
 import com.example.reddit.Reposotory.VerificationTokenRepository;
-import com.example.reddit.dto.AuthenticationRespone;
-import com.example.reddit.dto.LoginRequest;
-import com.example.reddit.dto.NotificationEmail;
-import com.example.reddit.dto.RegisterRequest;
+import com.example.reddit.dto.*;
 import com.example.reddit.exception.springRadditException;
 import com.example.reddit.security.JwtProvider;
 import lombok.AllArgsConstructor;
@@ -35,6 +34,7 @@ public class AuthService {
     private final MailService mailService;
     private final AuthenticationManager authenticationManager;
     private final JwtProvider JwtProvider;
+    private final RefreshTokenService refreshTokenService;
 
     @Transactional
     public void signup(RegisterRequest registerRequest) {
@@ -53,7 +53,7 @@ public class AuthService {
         notificationEmail.setRecipient(user.getEmail());
         notificationEmail.setSubject("please activate email!");
         notificationEmail.setBody("Thank you for signing to Reddit please click to the url to activate the account " +
-              "http://localhost:8080/api/auth/accountVerification/"+token);
+                "http://localhost:8080/api/auth/accountVerification/" + token);
         //notificationEmail.setBody(buildEmail("malak", "http://localhost:8080/api/auth/accountVerification/" + token));
         mailService.sendMail(notificationEmail);
     }
@@ -172,7 +172,25 @@ public class AuthService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         String authenticationToken = JwtProvider.generateToken(authentication);
+        String refreshToken = refreshTokenService.generateRefreshToken();
 
-        return new AuthenticationRespone(authenticationToken, loginRequest.getUserName());
+        AuthenticationRespone authenticationRespone = new AuthenticationRespone();
+        authenticationRespone.setAuthenticationToken(authenticationToken);
+        authenticationRespone.setUserName(loginRequest.getUserName());
+        authenticationRespone.setRefreshToken(refreshToken);
+        authenticationRespone.setExpireAt(Instant.now().plusMillis(JwtProvider.getJwtExpirationMillsec()));
+
+        return authenticationRespone;
+    }
+
+    public Object refreshToken(RefreshTokenRequest refreshTokenRequest) {
+        refreshTokenService.validateRefreshToken(refreshTokenRequest.getRefreshToken());
+        String authenticationToken= JwtProvider.generateTokenByUserName(refreshTokenRequest.getUserName());
+        return AuthenticationRespone.builder()
+                .refreshToken(refreshTokenRequest.getRefreshToken())
+                .authenticationToken(authenticationToken)
+                .userName(refreshTokenRequest.getUserName())
+                .expireAt(Instant.now().plusMillis(JwtProvider.getJwtExpirationMillsec()))
+                .build();
     }
 }
